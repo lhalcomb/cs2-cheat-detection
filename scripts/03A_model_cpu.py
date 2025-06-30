@@ -39,7 +39,7 @@ def load_dataset(base_dir, target_len=300):
 # Load dataset
 print("Loading dataset...")
 X, y = load_dataset("data/processed/features")
-print(f"📊 Feature shape: {X.shape}, Labels: {y.shape}")
+print(f"Feature shape: {X.shape}, Labels: {y.shape}")
 
 # Normalize features
 print("Scaling features...")

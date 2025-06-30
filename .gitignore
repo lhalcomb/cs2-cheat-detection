@@ -3,6 +3,8 @@ Data/
 venv/
 data/raw/
 *.dem
+*.mp4
+*.mkv
 
 # python-specific ignores
 __pycache__.
