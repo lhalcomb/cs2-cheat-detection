@@ -28,7 +28,7 @@ def load_dataset(base_dir, target_len=300):
                             last_row = df.iloc[[-1]].copy()
                             padding = pd.concat([last_row] * pad_rows, ignore_index=True)
                             df = pd.concat([df, padding], ignore_index=True)
-
+                            #why do we add zeros here? 
                         X.append(df.values[:target_len])
                         y.append(label)
 
@@ -107,3 +107,4 @@ disp.plot(cmap='Blues', values_format='d')
 plt.title("Confusion Matrix on Test Set")
 plt.tight_layout()
 plt.show()
+plt.savefig("confusion_matrix_test_set.png", dpi=300)

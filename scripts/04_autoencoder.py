@@ -22,14 +22,17 @@ def load_legit_cheat(base_dir, target_len=300):
                     df = pd.read_csv(os.path.join(path, file))
                     features = df.drop(columns=["tick", "steamid", "label"], errors="ignore")
 
-                    if features.shape[0] >= 290:
+                    if features.shape[0] >= 290: # features.shape[0] = 291
+                        
                         if features.shape[0] < target_len:
-                            pad_rows = target_len - features.shape[0]
-                            padding = pd.DataFrame(np.zeros((pad_rows, features.shape[1])), columns=features.columns)
-                            features = pd.concat([features, padding], ignore_index=True)
+                            pad_rows = target_len - features.shape[0] # pad_rows = 9
 
-                        X.append(features.values[:target_len])
-                        y.append(label)
+                            padding = pd.DataFrame(np.zeros((pad_rows, features.shape[1])), columns=features.columns)
+
+                            features = pd.concat([features, padding], ignore_index=True)
+                        
+                        X.append(features.values[:target_len]) #input all the values in features, omit columns
+                        y.append(label) #input 0's and 1's [legit, cheater] respectively
                 except Exception as e:
                     print(f"Error reading {file}: {e}")
     return np.array(X), np.array(y)
@@ -37,7 +40,7 @@ def load_legit_cheat(base_dir, target_len=300):
 # --------------------- Build Autoencoder ---------------------
 def build_autoencoder(seq_len, n_features):
     inp = Input(shape=(seq_len, n_features))
-    encoded = LSTM(64, activation='tanh')(inp)
+    encoded = LSTM(64, activation='tanh')(inp) 
     decoded = RepeatVector(seq_len)(encoded)
     decoded = LSTM(n_features, activation='tanh', return_sequences=True)(decoded)
 
@@ -52,11 +55,15 @@ if __name__ == "__main__":
     X, y = load_legit_cheat(base_dir)
     print("✅ Loaded dataset:", X.shape, y.shape)
 
+
     # Normalize features
     X_flat = X.reshape(-1, X.shape[-1])
+    print(X_flat)
     scaler = StandardScaler()
     X_scaled_flat = scaler.fit_transform(X_flat)
+    print(f"The normalized X {X_scaled_flat}")
     X_scaled = X_scaled_flat.reshape(X.shape)
+    print(f"The normalized X reshaped into the (2212, 300, 77): {X_scaled}")
 
     # Use only legit for training
     X_legit = X_scaled[y == 0]
@@ -67,11 +74,11 @@ if __name__ == "__main__":
     model.summary()
 
     history = model.fit(
-        X_train, X_train,
+        X_train, X_train, #input data and target are same bc we hope that it would learn to reconstruct itself
         validation_data=(X_val, X_val),
         epochs=20,
         batch_size=16,
-        callbacks=[EarlyStopping(patience=3, restore_best_weights=True)],
+        callbacks=[EarlyStopping(patience=3, restore_best_weights=True)], #if validation loss doesnt improve for 3 consecutive epochs stop and restore best weights found
         verbose=1
     )
 
@@ -92,6 +99,7 @@ if __name__ == "__main__":
     disp.plot(cmap="Blues")
     plt.title("Autoencoder Confusion Matrix")
     plt.tight_layout()
+    plt.savefig('confusion_matrix.png', dpi=100, bbox_inches='tight')
     plt.show()
 
     sns.kdeplot(mse[y == 0], label="Legit")
@@ -100,5 +108,6 @@ if __name__ == "__main__":
     plt.legend()
     plt.title("Reconstruction Error Distributions")
     plt.xlabel("MSE")
+    plt.savefig('reconstruction_error.png', dpi=100, bbox_inches='tight')
     plt.show()
 
